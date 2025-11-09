@@ -182,6 +182,19 @@ string devernam(string text, string key) {
     }
     return result;
 }
+string eonetimepad(string text, string key) {
+    string cipher = "";
+    for (int i = 0; i < text.size(); i++)
+        cipher += text[i] ^ key[i];   // XOR for encryption
+    return cipher;
+}
+
+string donetimepad(string cipher, string key) {
+    string text = "";
+    for (int i = 0; i < cipher.size(); i++)
+        text += cipher[i] ^ key[i];   // XOR again for decryption
+    return text;
+}
 
 
 int main()
@@ -300,3 +313,4 @@ int main()
 
     return 0;
 }
+
