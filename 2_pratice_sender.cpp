@@ -1,132 +1,128 @@
+#include<bits/stdc++.h>
 
-#include <iostream>
-#include <fstream>
-#include <cmath>
-#include <chrono>
 using namespace std;
-using namespace std::chrono;
 
-long long gcd(long long a, long long b) {
-    a = llabs(a);
-    b = llabs(b);
-    while (b != 0) {
-        long long t = b;
-        b = a % b;
-        a = t;
+long long gcd(long long a, long long b)
+{
+    while(b!=0)
+    {
+        long long temp = b;
+        b = a%b;
+        a = temp;
     }
     return a;
 }
 
-long long modinv(long long e, long long phi) {
-    for (long long i = 1; i < phi; ++i) {
-        if ((e * i) % phi == 1)
-            return i;
+long long modexp(long long base, long long expo, long long mod)
+{
+    long long result=1;
+    base%=mod;
+    while(expo > 0)
+    {
+        if(expo%2!=0)
+            result=(result * base)%mod;
+        expo/=2;
+        base=(base * base)%mod;
     }
-    return -1; 
+    return result;
 }
 
-long long modexp(long long b, long long e, long long m) {
-    long long r = 1;
-    b = b % m;
-    while (e > 0) {
-        if (e % 2 == 1)
-            r = (r * b) % m;
-        e /= 2;
-        b = (b * b) % m;
-    }
-    return r;
-}
 
-bool is_prime(long long num) {
-    if (num <= 1) return false;
-    if (num <= 3) return true;
-    if (num % 2 == 0) return false;
-    for (long long i = 3; i * i <= num; i += 2) {
-        if (num % i == 0) return false;
+
+bool isPrime(long long num)
+{
+    if(num <= 1)
+        return false;
+    if(num <=3)
+        return true;
+    if(num % 2 == 0 || num % 3 == 0)
+        return false;
+        
+    for(int i=5;i*i<num;i+=6)
+    {
+        if(num%i == 0 || num % (i +2) == 0)
+            return false;
     }
     return true;
 }
 
-int main() {
-    long long p, q;
-
-    while (true) {
-        cout << "Enter prime number p: ";
-        cin >> p;
-        cout << "Enter prime number q: ";
-        cin >> q;
-        if (is_prime(p) && is_prime(q)) break;
-        cout << "Both p and q must be prime numbers! Try again.\n\n";
-    }
-
-    long long n = p * q;
-    long long phi = (p - 1) * (q - 1);
-    cout << "\nn = " << n << ", phi = " << phi << "\n";
-    
-    // Calculate key size in bits
-    int key_size_bits = 0;
-    long long temp = n;
-    while (temp > 0) {
-        key_size_bits++;
-        temp >>= 1;
-    }
-    cout << "Key size: " << key_size_bits << " bits\n";
-
-    long long e;
-    while (true) {
-        cout << "Enter e : ";
-        cin >> e;
-        if (gcd(e, phi) == 1) break;
-        cout << "Invalid e! Try again.\n";
-    }
-
-    // Start timing for key generation
-    auto start_keygen = high_resolution_clock::now();
-    
-    long long d = modinv(e, phi);
-    if (d == -1) {
-        cerr << "Could not find modular inverse for e. Exiting.\n";
-        return 1;
+int main()
+{
+    long long p,q;
+    cout<<"Enter two prime numbers(p and q) [p > 5 and q > 5]:";
+    cin>>p>>q;
+    while(!isPrime(p))
+    {
+        cout<<"p is not a prime number. Enter correct prime number:";
+        cin>>p;
     }
     
-    auto end_keygen = high_resolution_clock::now();
-    auto duration_keygen = duration_cast<microseconds>(end_keygen - start_keygen);
-    
-    cout << "\nPrivate key (d) = " << d << "\n";
-    cout << "Time for key generation: " << duration_keygen.count() << " microseconds\n";
-
-    long long m;
-    cout << "\nEnter the number to encrypt: ";
-    cin >> m;
-    
-    // Calculate message size in bits
-    int msg_size_bits = 0;
-    temp = m;
-    while (temp > 0) {
-        msg_size_bits++;
-        temp >>= 1;
+    while(!isPrime(q))
+    {
+        cout<<"q is not a prime number. Enter correct prime number:";
+        cin>>q;
     }
-    cout << "Message size: " << msg_size_bits << " bits\n";
-
-    // Start timing for encryption
-    auto start_encrypt = high_resolution_clock::now();
     
-    long long c = modexp(m, e, n);
+    long long n,phi,e;
+    n = p * q;
+    phi = (p - 1)*(q - 1);
+    cout<<"n: "<<n<<", phi: "<<phi<<endl;
     
-    auto end_encrypt = high_resolution_clock::now();
-    auto duration_encrypt = duration_cast<microseconds>(end_encrypt - start_encrypt);
-    
-    cout << "\nCiphertext = " << c << "\n";
-    cout << "Time for encryption: " << duration_encrypt.count() << " microseconds\n";
-
-    ofstream fout("data.txt");
-    if (!fout.is_open()) {
-        cerr << "Error: could not open data.txt for writing.\n";
-        return 1;
+    auto startE = chrono::high_resolution_clock::now();
+    cout<<"Enter public enponential(e) such that gcd(e,phi)==1 && 1< e < phi: ";
+    cin>>e;
+    while(gcd(e,phi)!= 1  || 1 > e || e > phi)
+    {
+        cout<<"Invalid input e, try again:";
+        cin>>e;
     }
-    fout << n << " " << d << "\n" << c << "\n";
+    
+    auto endE = chrono::high_resolution_clock::now();
+    chrono::duration<double> keyTime = endE - startE;
+    
+    cout<<"Public Key(e,n): ("<<e<<","<<n<<")"<<endl;
+    cout<<"Time to generate key pairs:"<<keyTime.count()<<" seconds"<<endl;
+    
+    cin.ignore();
+    string msg;
+    cout<<"Enter the message:";
+    getline(cin, msg);
+    
+    cout<<"Encrypted Text:";
+    
+    auto startEnc = chrono::high_resolution_clock::now();
+    vector<long long> cipher;
+
+    for (char ch : msg)
+    {
+        if (isalpha(ch))
+        {
+            char base = isupper(ch) ? 'A' : 'a';
+            long long msgVal = ch - base;
+            long long c = modexp(msgVal, e, n);
+            cipher.push_back(c);
+    
+            cout << char((c % 26) + base);
+        }
+    }
+
+        
+    auto endEnc = chrono::high_resolution_clock::now();
+    chrono::duration<double> encTime = endEnc - startEnc;
+    
+    cout<<"\nEncryption time:"<<encTime.count()<<" seconds"<<endl;
+    
+    
+    ofstream fout("cipher.txt");
+    fout<<n<<" "<<e<<"\n";
+    for(auto c: cipher)
+        fout<<c<<" ";
     fout.close();
-
-    cout << "\n[+] Ciphertext and keys saved to data.txt successfully!\n";
+    
+    cout<<"Saved 'cipher.txt' for Receiver program";
+    
     return 0;
+    
+    
+    
 }
