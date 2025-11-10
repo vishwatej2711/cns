@@ -1,75 +1,88 @@
-#include <iostream>
-#include <fstream>
-#include <sstream>
-#include <chrono>
-using namespace std;
-using namespace std::chrono;
+#include<bits/stdc++.h>
 
-// Function for modular exponentiation: (b^e) % m
-long long modexp(long long b, long long e, long long m) {
-    long long r = 1;
-    b = b % m;
-    while (e > 0) {
-        if (e % 2 == 1)
-            r = (r * b) % m;
-        e /= 2;
-        b = (b * b) % m;
+using namespace std;
+
+
+long long modInv(long long e, long long phi)
+{
+    for(int i=1;i<phi;i++)
+    {
+        if((e * i)%phi == 1 )
+            return i;
     }
-    return r;
+    return -1;
 }
 
-int main() {
-    ifstream file("data.txt");
-    if (!file.is_open()) {
-        cerr << "Error: data.txt not found. Run sender first!" << endl;
-        return 1;
+long long modexp(long long base, long long expo, long long mod)
+{
+    long long result = 1;
+    base%=mod;
+    while(expo > 0)
+    {
+        if(expo%2 != 0)
+            result= (result * base)%mod;
+        expo/=2;
+        base=(base * base)%mod;
     }
+    return result;
+}
 
-    long long n, d;
-    string line;
 
-    // Read first line: n and d
-    getline(file, line);
-    stringstream ss(line);
-    ss >> n >> d;
-
-    // Read second line: cipher number
-    long long c;
-    getline(file, line);
-    stringstream ss2(line);
-    ss2 >> c;
-
-    cout << "n = " << n << ", d = " << d << endl;
-    cout << "Received Ciphertext: " << c << endl;
-    
-    // Calculate key size in bits
-    int key_size_bits = 0;
-    long long temp = n;
-    while (temp > 0) {
-        key_size_bits++;
-        temp >>= 1;
-    }
-    cout << "Key size: " << key_size_bits << " bits\n";
-
-    // Start timing for decryption
-    auto start_decrypt = high_resolution_clock::now();
-    
-    long long m = modexp(c, d, n);
-    
-    auto end_decrypt = high_resolution_clock::now();
-    auto duration_decrypt = duration_cast<microseconds>(end_decrypt - start_decrypt);
-    
-    // Calculate decrypted message size in bits
-    int msg_size_bits = 0;
-    temp = m;
-    while (temp > 0) {
-        msg_size_bits++;
-        temp >>= 1;
+int main()
+{
+    ifstream fin("cipher.txt");
+    if(!fin)
+    {
+        cout<<"Error: 'cipher.txt not found";
+        return 0;
     }
     
-    cout << "\nDecrypted Message: " << m << endl;
-    cout << "Message size: " << msg_size_bits << " bits\n";
-    cout << "Time for decryption: " << duration_decrypt.count() << " microseconds\n";
-
-    return 0;
+    long long n,e;
+    fin>>n>>e;
+    vector<long long > cipher;
+    long long temp;
+    while (fin >> temp)
+    {
+        cipher.push_back(temp);
+    }
+    fin.close();
+    
+    cout<<"Received Public Keys:(n,e)=>("<<n<<","<<e<<")"<<endl;
+    cout<<"Cipher:";
+    for(auto c: cipher)
+        cout<<c<<" ";
+    
+    long long p,q;
+    cout<<"\n Enter the same prime numbers that were entered by sender:";
+    cin>>p>>q;
+    
+    long long phi;
+    if(p * q != n)
+    {    cout<<"Error: You did not entered correct prime numbers";
+        return 0;
+    }    
+    phi = (p - 1)*(q - 1);
+    
+    auto startD = chrono::high_resolution_clock::now();
+    long long d = modInv(e,phi);
+    auto endD = chrono::high_resolution_clock::now();
+    chrono::duration<double> privTime = endD - startD;
+    
+    if(d == -1)
+    {
+        cout<<"Error: Modular inverse doees not exusts (e, phi )not coprime"<<endl;
+        return 0;
+    }
+    
+    auto startDec = chrono::high_resolution_clock::now();
+    string message="";
+    for(auto c:cipher)
+    {
+        long long m = modexp(c,d,n);
+        message+=char(m + 'A');
+    }
+    auto endDec = chrono::high_resolution_clock::now();
+    chrono::duration<double> decTime = endDec - startDec;
+    cout<<"Decrypted text:"<<message<<endl;
+    cout<<"Decryption time: "<<decTime.count()<<" seconds"<<endl;
 }
